@@ -71,7 +71,7 @@ async def get_text_messages(msg: types.Message):
         db.change_activity(id,    Activity.menu.value + 1)
 
         message = "Введите название товара"
-        await msg.answer(message, parse_mode="html")
+        await msg.answer(message, parse_mode="html", reply_markup=types.ReplyKeyboardRemove())
 
 
     elif user_data['activity']    ==    Activity.product_name.value:
