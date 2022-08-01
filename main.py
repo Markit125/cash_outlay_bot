@@ -3,12 +3,16 @@ from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 from BotFunctions.keyboards import keyboard_add_purchase, keyboard_interval_of_query, keyboard_product_note_check, keyboard_tag, keyboard_weigth
 from BotFunctions.processing import get_product_note_check, get_profile, is_positive_float_number
+from Report.PDF import make_report_in_PDF
 
 import DataBase.database as db
 import enum
 
-TOKEN = "5462550968:AAEctf1SjRN__ANt4SlNU2_71f6oQDjauC4"
-bot = Bot(token=TOKEN)
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+bot = Bot(token=os.getenv('TOKEN'))
 dp = Dispatcher(bot)
 
 
@@ -144,8 +148,11 @@ async def get_text_messages(msg: types.Message):
         else:
             await msg.answer('Не понимаю, что это значит.')
             return
-        message = db.get_report(id, days_ago)
+        message, all_notes, (from_date, to_date) = db.get_report(id, days_ago)
         await msg.answer(message, parse_mode="html")
+        make_report_in_PDF(id, all_notes, from_date, to_date)
+        await msg.reply_document(open(f'{id}.pdf', 'rb'))
+        os.remove(f'{id}.pdf')
 
 
     else:

@@ -137,14 +137,16 @@ def add_note(id):
 
 
 def get_report(id, days_ago):
+    now_date = datetime.now().strftime("%Y-%m-%d")
+    ago_date = None
     if days_ago == -1:
         command =  f"SELECT * FROM notes WHERE '{id}'=fk_notes_users"
     else:
         d = datetime.now() - timedelta(days_ago)
         ago_date = d.strftime("%Y-%m-%d")
-        now_date = datetime.now().strftime("%Y-%m-%d")
         command =  f"""
-                        SELECT * FROM notes WHERE (date BETWEEN '{ago_date}' AND '{now_date}')
+                        SELECT name, count, price, tag, date
+                        FROM notes WHERE (date BETWEEN '{ago_date}' AND '{now_date}')
                         AND '{id}'=fk_notes_users
                     """
     
@@ -164,7 +166,10 @@ def get_report(id, days_ago):
             report += (f"{i} | {all_notes[i]['name']} | {all_notes[i]['count']} | "
                        f"{all_notes[i]['price']} | {all_notes[i]['date']}\n"
             )
-        return report
+        if ago_date == None:
+            ago_date = all_notes[0]['date']
+            
+        return report, all_notes, (ago_date, now_date)
         
     # except (Exception, psycopg2.DatabaseError) as error:
     #     print("def add_note(id):", error)
