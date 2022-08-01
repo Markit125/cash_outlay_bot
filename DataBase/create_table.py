@@ -1,9 +1,15 @@
 import psycopg2
 import psycopg2.extras
-from config import host, user, password, db_name
+import os
+from dotenv import load_dotenv
 
 
 def connect_to_base():
+    load_dotenv()
+    host = os.getenv("HOST")
+    user = os.getenv("USER")
+    password = os.getenv("PASSWORD")
+    db_name = os.getenv("DB_NAME")
     return psycopg2.connect(
                 host=host,
                 user=user,

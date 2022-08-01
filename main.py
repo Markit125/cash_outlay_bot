@@ -64,7 +64,7 @@ async def get_text_messages(msg: types.Message):
     text = msg.text.lower()
     id = msg.from_user.id
     user_data = db.get_data(id)
-    print(user_data)
+    # print(user_data)
 
     if user_data == None:
         message = "Выполните команду /start"
@@ -93,8 +93,8 @@ async def get_text_messages(msg: types.Message):
             await msg.answer(message, parse_mode="html")
             return
 
-        db.add_to_buffer(id, msg.text,  Activity.product_count.value)
-        db.change_activity(id,          Activity.product_count.value + 1)
+        db.add_to_buffer(id, text,  Activity.product_count.value)
+        db.change_activity(id,      Activity.product_count.value + 1)
         
         message = "Введите цену за единицу товара"
         await msg.answer(message, parse_mode="html")
