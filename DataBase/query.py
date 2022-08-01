@@ -1,9 +1,17 @@
 import psycopg2
-from config import host, user, password, db_name
+
+import os
+from dotenv import load_dotenv
 
 def query():
     conn = None
     try:
+
+        load_dotenv()
+        host = os.getenv("HOST")
+        user = os.getenv("USER")
+        password = os.getenv("PASSWORD")
+        db_name = os.getenv("DB_NAME")
         conn = psycopg2.connect(
                 host=host,
                 user=user,
