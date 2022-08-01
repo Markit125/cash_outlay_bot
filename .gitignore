@@ -1,3 +1,7 @@
 .env
 testing.py
 venv
+__pycache__
+BotFunctions/__pycache__
+DataBase/__pycache__
+Report/__pycache__
