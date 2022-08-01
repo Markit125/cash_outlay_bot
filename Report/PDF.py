@@ -30,7 +30,7 @@ def make_report_in_PDF(id, notes, from_data, to_date):
     text = f'Отчёт с {from_data} до {to_date}.'
     layout.add(Paragraph(text, font=custom_font, horizontal_alignment=Alignment.CENTERED))
 
-    table = FlexibleColumnWidthTable(number_of_columns=6, number_of_rows=len(notes) + 1, horizontal_alignment=Alignment.CENTERED)
+    table = FlexibleColumnWidthTable(number_of_columns=6, number_of_rows=len(notes)+3, horizontal_alignment=Alignment.CENTERED)
     table.add(
         TableCell(Paragraph("№", font=custom_font), background_color=X11Color("SlateGray"))
     ).add(
@@ -44,15 +44,27 @@ def make_report_in_PDF(id, notes, from_data, to_date):
     ).add(
         TableCell(Paragraph("Дата", font=custom_font), background_color=X11Color("SlateGray")
     ))
-    
+    all_sum = 0
     for i in range(len(notes)):
-        print(f'\n\n{notes[i]}\n\n')
         table.add(Paragraph(f"{i + 1}", font=custom_font)
         ).add(Paragraph(f"{notes[i]['name']}", font=custom_font)
         ).add(Paragraph(f"{notes[i]['count']}", font=custom_font)
         ).add(Paragraph(f"{notes[i]['price']}", font=custom_font)
         ).add(Paragraph(f"{notes[i]['tag']}", font=custom_font)
         ).add(Paragraph(f"{notes[i]['date']}", font=custom_font))
+        all_sum += float(notes[i]['price'][:-2].replace(",", "."))
+    
+    table.add(
+        TableCell(
+            Paragraph(" "),
+            col_span=6,
+            border_right=False,
+            border_left=False
+        )
+    )
+    table.add(TableCell(
+        Paragraph("Итого", font=custom_font, horizontal_alignment=Alignment.RIGHT), col_span=5)
+    ).add(Paragraph(f"{all_sum}{notes[0]['price'][-2:]}", font=custom_font))
     
     table.set_padding_on_all_cells(Decimal(2), Decimal(2), Decimal(4), Decimal(4))
     layout.add(table)

@@ -118,7 +118,6 @@ async def get_text_messages(msg: types.Message):
         buffer = user_data['buffer'].split('|')[:-1]
         text = '-' if text == 'пропустить' else msg.text
         buffer += [text]
-        print(buffer)
         db.add_to_buffer(id, text,      Activity.product_tag.value)
         db.change_activity(id,          Activity.product_tag.value + 1)
         message = f"Проверьте запись:\n{get_product_note_check(buffer)}"
