@@ -1,7 +1,7 @@
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
-from BotFunctions.keyboards import keyboard_add_purchase, keyboard_interval_of_query, keyboard_product_note_check, keyboard_tag, keyboard_weigth
+from BotFunctions.keyboards import keyboard_add_purchase, keyboard_interval_of_query, keyboard_product_note_check, keyboard_tag, keyboard_weigth, keyboard_yes_no
 from BotFunctions.processing import get_product_note_check, get_profile, is_positive_float_number
 from Report.PDF import make_report_in_PDF
 
@@ -17,7 +17,8 @@ dp = Dispatcher(bot)
 
 
 class Activity(enum.Enum):
-    create_query = -2
+    save_tag = -3
+    create_report = -2
     menu = -1
     product_name = 0
     product_count = 1
@@ -64,7 +65,7 @@ async def get_text_messages(msg: types.Message):
     text = msg.text.lower()
     id = msg.from_user.id
     user_data = db.get_data(id)
-    # print(user_data)
+    print(user_data)
 
     if user_data == None:
         message = "Выполните команду /start"
@@ -111,7 +112,7 @@ async def get_text_messages(msg: types.Message):
         db.change_activity(id,      Activity.product_price.value + 1)
         
         message = "Назначте тег товару"
-        await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag())
+        await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags']))
 
     
     elif user_data['activity']    ==    Activity.product_tag.value:
@@ -119,15 +120,32 @@ async def get_text_messages(msg: types.Message):
         text = '-' if text == 'пропустить' else msg.text
         buffer += [text]
         db.add_to_buffer(id, text,      Activity.product_tag.value)
-        db.change_activity(id,          Activity.product_tag.value + 1)
+        db.change_activity(id,      Activity.product_tag.value + 1)
+        
         message = f"Проверьте запись:\n{get_product_note_check(buffer)}"
         await msg.answer(message, parse_mode="html", reply_markup=keyboard_product_note_check())
 
 
-    elif user_data['activity'] == Activity.product_checking.value and text == 'готово':
+    elif user_data['activity'] == Activity.product_checking.value and text in ('готово', 'да', 'нет'):
         db.add_note(id)
-        db.change_activity(id, Activity.menu.value)
+        tag = user_data['buffer'].split('|')[-1]
         message = "Запись успешно добавлена"
+        print('tag', tag)
+        if tag != '-' and tag not in user_data['tags'].split('.'):
+            db.change_activity(id, Activity.save_tag.value)
+            message += f'\nСохранить тег {tag}?'
+            await msg.answer(message, parse_mode="html", reply_markup=keyboard_yes_no())
+        else:
+            db.change_activity(id, Activity.menu.value)
+            await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
+
+
+    elif user_data['activity'] == Activity.save_tag.value and text in ('да', 'нет'):
+        tag = user_data['buffer'].split('|')[-1]
+        message = 'Тег не сохранен'
+        if text == 'да':
+            message = db.save_tag(id, tag)
+        db.change_activity(id, Activity.menu.value)
         await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
 
 
@@ -137,7 +155,7 @@ async def get_text_messages(msg: types.Message):
         await msg.answer(message, parse_mode="html", reply_markup=keyboard_interval_of_query())
 
 
-    elif user_data['activity'] == Activity.create_query.value:
+    elif user_data['activity'] == Activity.create_report.value:
         if text == 'неделя':
             days_ago = 7
         elif text == 'месяц':
@@ -149,8 +167,12 @@ async def get_text_messages(msg: types.Message):
             return
         message, all_notes, (from_date, to_date) = db.get_report(id, days_ago)
         await msg.answer(message, parse_mode="html")
+        
+        wait_message = await msg.answer('<b>Processing...</b>', parse_mode="html")
         make_report_in_PDF(id, all_notes, from_date, to_date)
-        await msg.reply_document(open(f'{id}.pdf', 'rb'))
+        await msg.reply_document(open(f'{id}.pdf', 'rb'), reply_markup=keyboard_add_purchase())
+        await wait_message.delete()
+        
         os.remove(f'{id}.pdf')
 
 

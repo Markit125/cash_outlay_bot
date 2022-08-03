@@ -24,7 +24,7 @@ def query():
             # print(f'"{command}"')
             with conn.cursor() as cur:
                 cur.execute(command)
-                if "INSERT" not in command.upper():
+                if "SELECT" in command.upper():
                     print(cur.fetchall())
 
             conn.commit()

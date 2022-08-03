@@ -32,8 +32,8 @@ def check_in_base(id):
                 print(id, type(id))
                 cur.execute(
                     f"""
-                        INSERT INTO users (user_id, activity, count_notes, buffer)
-                        VALUES ('{id}', -1, 0, '|||')
+                        INSERT INTO users (user_id, activity, count_notes, buffer, tags)
+                        VALUES ('{id}', -1, 0, '|||', ' ')
                     """
                 )
         conn.commit()
@@ -124,7 +124,7 @@ def add_note(id):
                 """
             )
             cur.execute(command_1)
-            command_2 = f"UPDATE users SET count_notes={count + 1}, buffer='|||' WHERE user_id='{id}'"
+            command_2 = f"UPDATE users SET count_notes={count + 1} WHERE user_id='{id}'"
             cur.execute(command_2)
         conn.commit()
             
@@ -163,7 +163,7 @@ def get_report(id, days_ago):
             report = ""
             for i in range(len(all_notes)):
                 report += (f"{i} | {all_notes[i]['name']} | {all_notes[i]['count']} | "
-                        f"{all_notes[i]['price']} | {all_notes[i]['date']}\n"
+                        f"{all_notes[i]['price']} | {all_notes[i]['tag']} |{all_notes[i]['date']}\n"
                 )
             if ago_date == None:
                 ago_date = all_notes[0]['date']
@@ -171,7 +171,37 @@ def get_report(id, days_ago):
             return report, all_notes, (ago_date, now_date)
             
     except (Exception, psycopg2.DatabaseError) as error:
-        print("def add_note(id):", error)
+        print("def get_report(id):", error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def save_tag(id, tag):
+    print(tag)
+    command_0 = f"SELECT tags FROM users WHERE user_id='{id}'"
+    
+    conn = None
+    try:
+        conn = connect_to_base()
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute(command_0)
+            tags = cur.fetchone()['tags']
+            print(tags)
+            if tags == ' ':
+                tags = f'{tag}'
+            else:
+                tags += f'.{tag}'
+            if len(tags) > 200:
+                return 'Удалите лишние теги, память заполнена'
+            command_1 = f"UPDATE users SET tags='{tags}' WHERE user_id='{id}'"
+            cur.execute(command_1)
+            
+        conn.commit()
+        return f'Тег {tag} успешно сохранён!'
+            
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("def save_tag(id):", error)
     finally:
         if conn is not None:
             conn.close()

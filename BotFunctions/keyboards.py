@@ -16,8 +16,14 @@ def keyboard_weigth():
     return keyboard
 
 
-def keyboard_tag():
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+def keyboard_tag(tags):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, one_time_keyboard=True)
+    if tags != None:
+        tags = tags.split('.')
+        tag_buttons = [
+            types.InlineKeyboardButton(text=i, callback_data=i) for i in tags if i != ' '
+        ]
+        keyboard.add(*tag_buttons)
     key_skip = types.InlineKeyboardButton(text='Пропустить', callback_data='-')
     keyboard.add(key_skip)
     return keyboard
@@ -37,4 +43,12 @@ def keyboard_interval_of_query():
     key_all_time = types.InlineKeyboardButton(text='Все времена', callback_data='Все времена')
     # key_custom = types.InlineKeyboardButton(text='Свой', callback_data='Свой')
     keyboard.add(key_week, key_month, key_all_time)
+    return keyboard
+
+
+def keyboard_yes_no():
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    key_yes = types.InlineKeyboardButton(text='Да', callback_data='Да')
+    key_no = types.InlineKeyboardButton(text='Нет', callback_data='Нет')
+    keyboard.add(key_yes, key_no)
     return keyboard
