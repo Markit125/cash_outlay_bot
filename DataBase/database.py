@@ -91,7 +91,6 @@ def add_to_buffer(id, name, position):
             buffer = cur.fetchone()['buffer'].split('|')
             buffer[position] = name
             buffer = '|'.join(buffer)
-
             command_1 = f"UPDATE users SET buffer='{buffer}' WHERE user_id='{id}'"
             cur.execute(command_1)
         conn.commit()
@@ -205,6 +204,23 @@ def save_tag(id, tag):
     finally:
         if conn is not None:
             conn.close()
+
+
+def clear_buffer(id):
+    command = f"UPDATE users SET buffer='|||' WHERE user_id='{id}'"
+    conn = None
+    try:
+        conn = connect_to_base()
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute(command)
+        conn.commit()
+            
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("def clear_buffer():", error)
+    finally:
+        if conn is not None:
+            conn.close()
+
 
 
 if __name__ == '__main__':

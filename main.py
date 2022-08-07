@@ -15,6 +15,8 @@ load_dotenv()
 bot = Bot(token=os.getenv('TOKEN'))
 dp = Dispatcher(bot)
 
+commands_view = open('TextFiles/send_commands.txt', 'r').read()
+
 
 class Activity(enum.Enum):
     save_tag = -3
@@ -37,11 +39,17 @@ async def send_welcome(msg: types.Message):
     await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
 
 
+@dp.message_handler(commands="commands")
+async def send_commands(msg: types.Message):
+    await msg.answer(commands_view, parse_mode="html")
+
+
 @dp.message_handler(commands="menu")
 async def go_menu(msg: types.Message):
     id = msg.from_user.id
     db.check_in_base(id)
     db.change_activity(id, Activity.menu.value)
+    db.clear_buffer(id)
 
     message = "Возврат в меню"
     await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
@@ -94,8 +102,8 @@ async def get_text_messages(msg: types.Message):
             await msg.answer(message, parse_mode="html")
             return
 
-        db.add_to_buffer(id, text,  Activity.product_count.value)
-        db.change_activity(id,      Activity.product_count.value + 1)
+        db.add_to_buffer  (id, text,    Activity.product_count.value)
+        db.change_activity(id,          Activity.product_count.value + 1)
         
         message = "Введите цену за единицу товара"
         await msg.answer(message, parse_mode="html")
@@ -111,26 +119,37 @@ async def get_text_messages(msg: types.Message):
         db.add_to_buffer(id, text,  Activity.product_price.value)
         db.change_activity(id,      Activity.product_price.value + 1)
         
-        message = "Назначте тег товару"
-        await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags']))
+        message = "Назначте теги товару"
+        await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], True))
 
     
-    elif user_data['activity']    ==    Activity.product_tag.value:
-        buffer = user_data['buffer'].split('|')[:-1]
-        text = '-' if text == 'пропустить' else msg.text
-        buffer += [text]
-        db.add_to_buffer(id, text,      Activity.product_tag.value)
-        db.change_activity(id,      Activity.product_tag.value + 1)
+    elif user_data['activity']    ==    Activity.product_tag.value and text == 'дальше':
+        buffer = user_data['buffer'].split('|')
+        db.change_activity(id,          Activity.product_tag.value + 1)
         
         message = f"Проверьте запись:\n{get_product_note_check(buffer)}"
         await msg.answer(message, parse_mode="html", reply_markup=keyboard_product_note_check())
+
+
+    elif user_data['activity']    ==    Activity.product_tag.value:
+        active_tags = user_data['buffer'].split('|')[-1]
+        text = '-' if text == 'пропустить' else msg.text
+        if len(active_tags) == 0:
+            active_tags = text
+        else:
+            if text not in active_tags.split('.'):
+                active_tags += f'.{text}'
+        db.add_to_buffer(id, active_tags,      Activity.product_tag.value)
+
+        message = f'Добавьте ещё тег или нажмите <b>Дальше</b>'
+        await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], False, active_tags))
 
 
     elif user_data['activity'] == Activity.product_checking.value and text in ('готово', 'да', 'нет'):
         db.add_note(id)
         tag = user_data['buffer'].split('|')[-1]
         message = "Запись успешно добавлена"
-        print('tag', tag)
+        
         if tag != '-' and tag not in user_data['tags'].split('.'):
             db.change_activity(id, Activity.save_tag.value)
             message += f'\nСохранить тег {tag}?'
@@ -167,11 +186,12 @@ async def get_text_messages(msg: types.Message):
             return
         message, all_notes, (from_date, to_date) = db.get_report(id, days_ago)
         await msg.answer(message, parse_mode="html")
-        
+
         wait_message = await msg.answer('<b>Processing...</b>', parse_mode="html")
         make_report_in_PDF(id, all_notes, from_date, to_date)
         await msg.reply_document(open(f'{id}.pdf', 'rb'), reply_markup=keyboard_add_purchase())
         await wait_message.delete()
+        db.change_activity(id, Activity.menu.value)
         
         os.remove(f'{id}.pdf')
 

@@ -7,7 +7,8 @@ def is_positive_float_number(num):
 
 
 def get_product_note_check(buffer):
-    return '{} | {} шт. | {} руб. | {}'.format(buffer[0], buffer[1], buffer[2], buffer[3])
+    print(buffer)
+    return '{} | {} шт. | {} руб. | {}'.format(buffer[0], buffer[1], buffer[2], ', '.join(buffer[3].split('.')))
     
 
 def get_profile(user_data, username):
