@@ -81,15 +81,14 @@ def change_activity(id, num):
 
 
 def add_to_buffer(id, name, position):
-    command_0 = f"SELECT buffer FROM users WHERE user_id='{id}'" 
-    
+    command_0 = f"SELECT buffer FROM users WHERE user_id='{id}'"
     conn = None
     try:
         conn = connect_to_base()
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute(command_0)
             buffer = cur.fetchone()['buffer'].split('|')
-            buffer[position] = name
+            buffer[position] = str(name)
             buffer = '|'.join(buffer)
             command_1 = f"UPDATE users SET buffer='{buffer}' WHERE user_id='{id}'"
             cur.execute(command_1)
@@ -134,7 +133,7 @@ def add_note(id):
             conn.close()
 
 
-def get_report(id, days_ago):
+def get_report(id, days_ago, tag):
     now_date = datetime.now().strftime("%Y-%m-%d")
     ago_date = None
     if days_ago == -1:
@@ -158,16 +157,18 @@ def get_report(id, days_ago):
             if all_notes == []:
                 report = "У вас нет ни одной записи за данный временной интервал!"
                 return report
-
+            notes = []
             report = ""
             for i in range(len(all_notes)):
-                report += (f"{i} | {all_notes[i]['name']} | {all_notes[i]['count']} | "
-                        f"{all_notes[i]['price']} | {all_notes[i]['tag']} |{all_notes[i]['date']}\n"
-                )
+                if tag in all_notes[i]['tag']:
+                    report += (f"{i} | {all_notes[i]['name']} | {all_notes[i]['count']} | "
+                            f"{all_notes[i]['price']} | {all_notes[i]['tag']} |{all_notes[i]['date']}\n"
+                    )
+                    notes.append(all_notes[i])
             if ago_date == None:
                 ago_date = all_notes[0]['date']
                 
-            return report, all_notes, (ago_date, now_date)
+            return report, notes, (ago_date, now_date)
             
     except (Exception, psycopg2.DatabaseError) as error:
         print("def get_report(id):", error)
@@ -187,7 +188,7 @@ def save_tag(id, tag):
             cur.execute(command_0)
             tags = cur.fetchone()['tags']
             print(tags)
-            if tags == ' ':
+            if tags == '':
                 tags = f'{tag}'
             else:
                 tags += f'.{tag}'
@@ -236,7 +237,6 @@ def remove_active_tag(id, tag):
 
             command_1 = f"UPDATE users SET buffer='{buffer}' WHERE user_id='{id}'"
             cur.execute(command_1)
-
 
         conn.commit()
             
