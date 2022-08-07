@@ -17,3 +17,12 @@ def get_profile(user_data, username):
             f"Количество записей: {user_data['count_notes']}\n"
             f"Ваши теги: {user_data['tags'].replace('.', ', ') if user_data['tags'] != None else '-'}"
     )
+
+def get_new_tag(active_tags, user_tags, offset=0):
+    for tag in active_tags:
+        if tag not in user_tags:
+            if offset:
+                offset -= 1
+                continue
+            return tag
+    return None

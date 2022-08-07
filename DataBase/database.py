@@ -221,6 +221,36 @@ def clear_buffer(id):
         if conn is not None:
             conn.close()
 
+def remove_active_tag(id, tag):
+    command_0 = f"SELECT buffer FROM users WHERE user_id='{id}'"
+    conn = None
+    try:
+        conn = connect_to_base()
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute(command_0)
+            buffer = cur.fetchone()['buffer'].split('|')
+
+            print(f'old     buffer {buffer}')
+
+            active_tags = buffer[-1].split('.')
+            print(active_tags)
+            active_tags.remove(tag)
+            print(active_tags)
+            buffer[-1] = '.'.join(active_tags)
+            print(f'updated buffer {buffer}')
+            buffer = '|'.join(buffer)
+
+            command_1 = f"UPDATE users SET buffer='{buffer}' WHERE user_id='{id}'"
+            cur.execute(command_1)
+
+
+        conn.commit()
+            
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("def clear_buffer():", error)
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 if __name__ == '__main__':

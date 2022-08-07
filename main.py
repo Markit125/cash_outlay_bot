@@ -2,7 +2,7 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 from BotFunctions.keyboards import keyboard_add_purchase, keyboard_interval_of_query, keyboard_product_note_check, keyboard_tag, keyboard_weigth, keyboard_yes_no
-from BotFunctions.processing import get_product_note_check, get_profile, is_positive_float_number
+from BotFunctions.processing import get_new_tag, get_product_note_check, get_profile, is_positive_float_number
 from Report.PDF import make_report_in_PDF
 
 import DataBase.database as db
@@ -140,32 +140,54 @@ async def get_text_messages(msg: types.Message):
             if text not in active_tags.split('.'):
                 active_tags += f'.{text}'
         db.add_to_buffer(id, active_tags,      Activity.product_tag.value)
+        if text != '-':
+            message = f'Добавьте ещё тег или нажмите <b>Дальше</b>'
+            await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], False, active_tags))
 
-        message = f'Добавьте ещё тег или нажмите <b>Дальше</b>'
-        await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], False, active_tags))
+        else:
+            db.change_activity(id,          Activity.product_tag.value + 1)
+            buffer = user_data['buffer'].split('|')
+            buffer[-1] = '-'
+            message = f"Проверьте запись:\n{get_product_note_check(buffer)}"
+            await msg.answer(message, parse_mode="html", reply_markup=keyboard_product_note_check())
 
 
     elif user_data['activity'] == Activity.product_checking.value and text in ('готово', 'да', 'нет'):
         db.add_note(id)
-        tag = user_data['buffer'].split('|')[-1]
         message = "Запись успешно добавлена"
         
-        if tag != '-' and tag not in user_data['tags'].split('.'):
+        active_tags = user_data['buffer'].split('|')[-1].split('.')
+        user_tags = user_data['tags'].split('.')
+        new_tag = get_new_tag(active_tags, user_tags)
+
+        if active_tags != ['-'] and new_tag != None:
             db.change_activity(id, Activity.save_tag.value)
-            message += f'\nСохранить тег {tag}?'
+            message += f'\nСохранить тег {new_tag}?'
             await msg.answer(message, parse_mode="html", reply_markup=keyboard_yes_no())
         else:
             db.change_activity(id, Activity.menu.value)
+            db.clear_buffer(id)
             await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
 
 
     elif user_data['activity'] == Activity.save_tag.value and text in ('да', 'нет'):
-        tag = user_data['buffer'].split('|')[-1]
-        message = 'Тег не сохранен'
+        active_tags = user_data['buffer'].split('|')[-1].split('.')
+        user_tags = user_data['tags'].split('.')
+        new_tag = get_new_tag(active_tags, user_tags)
+        db.remove_active_tag(id, new_tag)
+        
+        message = f'Тег {new_tag} не сохранен'
         if text == 'да':
-            message = db.save_tag(id, tag)
-        db.change_activity(id, Activity.menu.value)
-        await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
+            message = db.save_tag(id, new_tag)
+
+        new_tag = get_new_tag(active_tags, user_tags, 1)
+        if new_tag != None:
+            message += f'\nСохранить тег {new_tag}?'
+            await msg.answer(message, parse_mode="html", reply_markup=keyboard_yes_no())
+        else:
+            db.change_activity(id, Activity.menu.value)
+            db.clear_buffer(id)
+            await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
 
 
     elif user_data['activity'] == Activity.menu.value and text == 'создать отчет':
