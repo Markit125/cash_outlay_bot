@@ -18,6 +18,11 @@ def keyboard_weigth():
 
 def keyboard_tag(user_tags, skip, *active_tags):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, one_time_keyboard=True)
+    if skip:
+        key_skip = types.InlineKeyboardButton(text='Пропустить', callback_data='-')
+    else:
+        key_skip = types.InlineKeyboardButton(text='Дальше', callback_data='Дальше')
+    keyboard.row(key_skip)
     if user_tags != None:
         user_tags = user_tags.split('.')
         keyboard_tags = user_tags[:]
@@ -30,11 +35,6 @@ def keyboard_tag(user_tags, skip, *active_tags):
             types.InlineKeyboardButton(text=i, callback_data=i) for i in keyboard_tags if i != ' '
         ]
         keyboard.add(*tag_buttons)
-    if skip:
-        key_skip = types.InlineKeyboardButton(text='Пропустить', callback_data='-')
-    else:
-        key_skip = types.InlineKeyboardButton(text='Дальше', callback_data='Дальше')
-    keyboard.add(key_skip)
     return keyboard
 
 
@@ -69,7 +69,21 @@ def remove_tag_keyboard(tags):
         return keyboard
     # keyboard = types.InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     tag_buttons = [
-        types.InlineKeyboardButton(tag, callback_data=f'tag_{tag}') for tag in tags
+        types.InlineKeyboardButton(tag, callback_data=f'tag_remove_{tag}') for tag in tags
     ]
     keyboard.add(*tag_buttons)
+    return keyboard
+
+
+def report_tag_keyboard(tags: list):
+    keyboard = types.InlineKeyboardMarkup()
+    if tags == None:
+        return keyboard
+    # keyboard = types.InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    tag_buttons = [
+        types.InlineKeyboardButton(tag, callback_data=f'tag_report_{tag}') for tag in tags
+    ]
+    keyboard.add(*tag_buttons)
+    key_make_report = types.InlineKeyboardButton(text='Все покупки', callback_data='tag_report_empty')
+    keyboard.add(key_make_report)
     return keyboard

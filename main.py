@@ -2,7 +2,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
-from BotFunctions.keyboards import keyboard_add_purchase, keyboard_interval_of_query, keyboard_product_note_check, keyboard_tag, keyboard_weigth, keyboard_yes_no, remove_tag_keyboard
+from BotFunctions.keyboards import report_tag_keyboard, keyboard_add_purchase, keyboard_interval_of_query, keyboard_product_note_check, keyboard_tag, keyboard_weigth, keyboard_yes_no, remove_tag_keyboard
 from BotFunctions.processing import get_new_tag, get_product_note_check, get_profile, is_positive_float_number
 from Report.PDF import make_report_in_PDF
 
@@ -83,18 +83,20 @@ async def remove_tag_from_profile_interface(msg: types.Message):
     await msg.answer(message, parse_mode="html", reply_markup=remove_tag_keyboard(tags))
 
 
-@dp.callback_query_handler(Text(startswith="tag_"))
+@dp.callback_query_handler(Text(startswith="tag_remove_"))
 async def remove_tag_from_profile(call: types.CallbackQuery):
     id = call.from_user.id
     db.check_in_base(id)
     user_data = db.get_data(id)
     if user_data == None:
         return
-    
+
+    await call.message.delete()
     if Activity.remove_tag.value != user_data['activity']:
+        await call.answer()
         return
         
-    tag = call.data[4:]
+    tag = call.data[11:]
     
     tags = db.remove_tag_from_user(id, tag)
     message = f'Тег {tag} удалён!\nВернуться в меню -> /menu'
@@ -103,7 +105,45 @@ async def remove_tag_from_profile(call: types.CallbackQuery):
     await call.answer()
 
 
+@dp.callback_query_handler(Text(startswith="tag_report_"))
+async def add_tag_to_report(call: types.CallbackQuery):
+    
+    await call.answer()
+    id = call.from_user.id
+    db.check_in_base(id)
+    user_data = db.get_data(id)
+    if user_data == None:
+        return
+    
+    await call.message.delete()
+    if Activity.create_report.value != user_data['activity']:
+        return
+        
+    tag = call.data[11:]
+    days_ago = int(user_data['buffer'].split('|')[0])
 
+    message = f'Отчёт о покупках за '
+    if days_ago == -1:
+        message += '<b>все времена</b> '
+    else:
+        message += f'<b>{days_ago} суток</b> '
+    if tag != 'empty':
+        message += f'с тегом <b>{tag}</b> '
+    message += 'будет готов через некоторое количество секунд'
+    
+    await call.message.answer(message, parse_mode="html")
+
+    message, all_notes, (from_date, to_date) = db.get_report(id, days_ago, tag)
+    await call.message.answer(message, parse_mode="html")
+
+    wait_message = await call.message.answer('<b>Processing...</b>', parse_mode="html")
+    make_report_in_PDF(id, all_notes, from_date, to_date)
+    await bot.send_document(id, open(f'{id}.pdf', 'rb'), reply_markup=keyboard_add_purchase())
+    await wait_message.delete()
+    db.change_activity(id, Activity.menu.value)
+    
+    os.remove(f'{id}.pdf')
+    
 
 @dp.message_handler()
 async def get_text_messages(msg: types.Message):
@@ -233,30 +273,24 @@ async def get_text_messages(msg: types.Message):
         await msg.answer(message, parse_mode="html", reply_markup=keyboard_interval_of_query())
 
 
-    elif user_data['activity'] == Activity.create_report.value:
+    elif user_data['activity'] == Activity.create_report.value and text in ('неделя', 'месяц', 'все времена'):
+        days_ago = -1
         if text == 'неделя':
             days_ago = 7
         elif text == 'месяц':
             days_ago = 30
-        elif text == 'все времена':
-            days_ago = -1
-        else:
-            await msg.answer('Не понимаю, что это значит.')
-            return
-        message, all_notes, (from_date, to_date) = db.get_report(id, days_ago)
-        await msg.answer(message, parse_mode="html")
+        # elif text == 'все времена':
+        #     days_ago = -1
 
-        wait_message = await msg.answer('<b>Processing...</b>', parse_mode="html")
-        make_report_in_PDF(id, all_notes, from_date, to_date)
-        await msg.reply_document(open(f'{id}.pdf', 'rb'), reply_markup=keyboard_add_purchase())
-        await wait_message.delete()
-        db.change_activity(id, Activity.menu.value)
+        db.add_to_buffer(id, days_ago, 0)
+        tags = user_data['tags'].split('.')
         
-        os.remove(f'{id}.pdf')
+        message = f'Выберите покупки с каким тегом включать в отчёт'
+        await msg.answer(message, parse_mode="html", reply_markup=report_tag_keyboard(tags))
 
-
+        
     else:
-        await msg.answer('Не понимаю, что это значит.')
+        await msg.answer('Вернитесь в меню -> /menu')
 
 
 if __name__ == '__main__':
