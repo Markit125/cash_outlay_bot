@@ -1,7 +1,8 @@
+from aiogram.dispatcher.filters import Text
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
-from BotFunctions.keyboards import keyboard_add_purchase, keyboard_interval_of_query, keyboard_product_note_check, keyboard_tag, keyboard_weigth, keyboard_yes_no
+from BotFunctions.keyboards import keyboard_add_purchase, keyboard_interval_of_query, keyboard_product_note_check, keyboard_tag, keyboard_weigth, keyboard_yes_no, remove_tag_keyboard
 from BotFunctions.processing import get_new_tag, get_product_note_check, get_profile, is_positive_float_number
 from Report.PDF import make_report_in_PDF
 
@@ -19,6 +20,7 @@ commands_view = open('TextFiles/send_commands.txt', 'r').read()
 
 
 class Activity(enum.Enum):
+    remove_tag = -4
     save_tag = -3
     create_report = -2
     menu = -1
@@ -66,6 +68,41 @@ async def send_profile(msg: types.Message):
 
     message = get_profile(user_data, msg.from_user.username)
     await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
+
+
+@dp.message_handler(commands="remove_tags")
+async def remove_tag_from_profile_interface(msg: types.Message):
+    id = msg.from_user.id
+    db.check_in_base(id)
+    db.change_activity(id, Activity.remove_tag.value)
+    user_data = db.get_data(id)
+    if user_data == None:
+        return
+    tags = user_data['tags'].split('.')
+    message = f"Нажмите на тег, чтобы удалить его\nВернуться в меню -> /menu"
+    await msg.answer(message, parse_mode="html", reply_markup=remove_tag_keyboard(tags))
+
+
+@dp.callback_query_handler(Text(startswith="tag_"))
+async def remove_tag_from_profile(call: types.CallbackQuery):
+    id = call.from_user.id
+    db.check_in_base(id)
+    user_data = db.get_data(id)
+    if user_data == None:
+        return
+    
+    if Activity.remove_tag.value != user_data['activity']:
+        return
+        
+    tag = call.data[4:]
+    
+    tags = db.remove_tag_from_user(id, tag)
+    message = f'Тег {tag} удалён!\nВернуться в меню -> /menu'
+    
+    await call.message.answer(message, parse_mode="html", reply_markup=remove_tag_keyboard(tags))
+    await call.answer()
+
+
 
 
 @dp.message_handler()

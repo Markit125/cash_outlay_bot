@@ -50,7 +50,7 @@ def make_report_in_PDF(id, notes, from_data, to_date):
         ).add(Paragraph(f"{notes[i]['name']}", font=custom_font)
         ).add(Paragraph(f"{notes[i]['count']}", font=custom_font)
         ).add(Paragraph(f"{notes[i]['price']}", font=custom_font)
-        ).add(Paragraph(f"{notes[i]['tag']}", font=custom_font)
+        ).add(Paragraph(f"{notes[i]['tag'].replace('.', ', ')}", font=custom_font)
         ).add(Paragraph(f"{notes[i]['date']}", font=custom_font))
         all_sum += float(notes[i]['price'][:-2].replace(",", "."))
     

@@ -17,18 +17,14 @@ def keyboard_weigth():
 
 
 def keyboard_tag(user_tags, skip, *active_tags):
-    print('iebvfndsfvlksfnvjksnvjlknvjkvjjsfljfl;ajflk;jfljasl')
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, one_time_keyboard=True)
     if user_tags != None:
         user_tags = user_tags.split('.')
         keyboard_tags = user_tags[:]
-        print(user_tags)
         if not skip:
             active_tags = active_tags[0].split('.')
             for tag in user_tags:
-                print(f'\nif {tag} in {active_tags}')
                 if tag in active_tags:
-                    print('Ja')
                     keyboard_tags.remove(tag)
         tag_buttons = [
             types.InlineKeyboardButton(text=i, callback_data=i) for i in keyboard_tags if i != ' '
@@ -64,4 +60,16 @@ def keyboard_yes_no():
     key_yes = types.InlineKeyboardButton(text='Да', callback_data='Да')
     key_no = types.InlineKeyboardButton(text='Нет', callback_data='Нет')
     keyboard.add(key_yes, key_no)
+    return keyboard
+
+
+def remove_tag_keyboard(tags):
+    keyboard = types.InlineKeyboardMarkup()
+    if tags == None:
+        return keyboard
+    # keyboard = types.InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    tag_buttons = [
+        types.InlineKeyboardButton(tag, callback_data=f'tag_{tag}') for tag in tags
+    ]
+    keyboard.add(*tag_buttons)
     return keyboard

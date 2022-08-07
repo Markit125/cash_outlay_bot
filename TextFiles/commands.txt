@@ -1,3 +1,4 @@
 start - Запустить бота
 menu - Выход в меню
 profile - Профиль
+remove_tags - Удалить теги
