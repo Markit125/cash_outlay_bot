@@ -157,10 +157,10 @@ def get_report(id, days_ago, tag):
             if all_notes == []:
                 report = "У вас нет ни одной записи за данный временной интервал!"
                 return report
+            report = ''
             notes = []
-            report = ""
             for i in range(len(all_notes)):
-                if tag in all_notes[i]['tag']:
+                if tag in all_notes[i]['tag'] or tag == 'empty':
                     report += (f"{i} | {all_notes[i]['name']} | {all_notes[i]['count']} | "
                             f"{all_notes[i]['price']} | {all_notes[i]['tag']} |{all_notes[i]['date']}\n"
                     )
