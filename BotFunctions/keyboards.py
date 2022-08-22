@@ -4,8 +4,9 @@ from aiogram import types
 def keyboard_add_purchase():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     key_report = types.InlineKeyboardButton(text='Создать отчет', callback_data='Создать отчет')
+    key_qr = types.InlineKeyboardButton(text='Сканировать QR-код', callback_data='Сканировать QR-код')
     key_add = types.InlineKeyboardButton(text='Добавить покупку', callback_data='Добавить покупку')
-    keyboard.add(key_report, key_add)
+    keyboard.add(key_report, key_qr, key_add)
     return keyboard
 
 

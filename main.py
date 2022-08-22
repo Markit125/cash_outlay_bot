@@ -12,6 +12,8 @@ import enum
 import os
 from dotenv import load_dotenv
 
+from recognizer import qr_data
+
 load_dotenv()
 bot = Bot(token=os.getenv('TOKEN'))
 dp = Dispatcher(bot)
@@ -29,6 +31,30 @@ class Activity(enum.Enum):
     product_price = 2
     product_tag = 3
     product_checking = 4
+    scan_qr = 5
+
+
+@dp.message_handler(content_types=['photo'])
+async def handle_docs_photo(msg):
+    id = msg.from_user.id
+    user_data = db.get_data(id)
+    if user_data == None:
+        return
+
+    if user_data['activity'] != Activity.scan_qr.value:
+        return
+    
+    file = f'{id}.jpg'
+    await msg.photo[-1].download(destination_file=file)
+    data = qr_data(file)
+    if data:
+        message = f'Succeded\n{data}'
+    else:
+        message = f'try again'
+    
+    await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
+
+
 
 
 @dp.message_handler(commands=['start', 'help'])
@@ -288,8 +314,15 @@ async def get_text_messages(msg: types.Message):
         message = f'Выберите покупки с каким тегом включать в отчёт'
         await msg.answer(message, parse_mode="html", reply_markup=report_tag_keyboard(tags))
 
+
+    elif user_data['activity'] == Activity.menu.value and text == 'сканировать qr-код':
+        db.change_activity(id,    Activity.menu.value + 6)
+        message = "Отправьте QR-код"
+        await msg.answer(message, parse_mode="html")
+
         
     else:
+        print(text)
         await msg.answer('Вернитесь в меню -> /menu')
 
 
