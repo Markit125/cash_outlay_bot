@@ -12,6 +12,7 @@ import enum
 import os
 from dotenv import load_dotenv
 
+import QR.json_working as jw
 from recognizer import qr_data
 
 load_dotenv()
@@ -45,14 +46,23 @@ async def handle_docs_photo(msg):
         return
     
     file = f'{id}.jpg'
+    print(file)
     await msg.photo[-1].download(destination_file=file)
-    data = qr_data(file)
-    if data:
-        message = f'Succeded\n{data}'
+    qr_code = qr_data(f'{file}')
+    os.remove(file)
+    if qr_code:
+        message = f'Scan succeded'
     else:
-        message = f'try again'
+        message = f'Try again'
+        await msg.answer(message, parse_mode="html")
+        return
+
+    await msg.answer(message, parse_mode="html")
+    jw.download_json(qr_code)
+    data = jw.extract_json()
+    db.add_from_qr(id, data)
     
-    await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
+
 
 
 
@@ -160,9 +170,13 @@ async def add_tag_to_report(call: types.CallbackQuery):
     await call.message.answer(message, parse_mode="html")
 
     message, all_notes, (from_date, to_date) = db.get_report(id, days_ago, tag)
+    if all_notes == 0:
+        await call.message.answer(message, parse_mode="html")
+        return    
     await call.message.answer(message, parse_mode="html")
 
     wait_message = await call.message.answer('<b>Processing...</b>', parse_mode="html")
+    
     make_report_in_PDF(id, all_notes, from_date, to_date)
     await bot.send_document(id, open(f'{id}.pdf', 'rb'), reply_markup=keyboard_add_purchase())
     await wait_message.delete()
@@ -284,7 +298,7 @@ async def get_text_messages(msg: types.Message):
             message = db.save_tag(id, new_tag)
 
         new_tag = get_new_tag(active_tags, user_tags, 1)
-        if new_tag != None:
+        if new_tag != None and message != None:
             message += f'\nСохранить тег {new_tag}?'
             await msg.answer(message, parse_mode="html", reply_markup=keyboard_yes_no())
         else:
@@ -319,6 +333,7 @@ async def get_text_messages(msg: types.Message):
         db.change_activity(id,    Activity.menu.value + 6)
         message = "Отправьте QR-код"
         await msg.answer(message, parse_mode="html")
+
 
         
     else:

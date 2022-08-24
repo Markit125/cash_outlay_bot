@@ -87,7 +87,10 @@ def add_to_buffer(id, name, position):
         conn = connect_to_base()
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute(command_0)
-            buffer = cur.fetchone()['buffer'].split('|')
+            buffer = cur.fetchone()
+            if buffer == None:
+                return
+            buffer = buffer['buffer'].split('|')
             buffer[position] = str(name)
             buffer = '|'.join(buffer)
             command_1 = f"UPDATE users SET buffer='{buffer}' WHERE user_id='{id}'"
@@ -111,6 +114,8 @@ def add_note(id):
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute(command_0)
             data = cur.fetchone()
+            if data == None:
+                return
             count = data['count_notes']
             buffer = data['buffer'].split('|')
 
@@ -123,6 +128,42 @@ def add_note(id):
             )
             cur.execute(command_1)
             command_2 = f"UPDATE users SET count_notes={count + 1} WHERE user_id='{id}'"
+            cur.execute(command_2)
+        conn.commit()
+            
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("def add_note(id):", error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def add_from_qr(id, data):
+    now_date = datetime.now().strftime("%Y-%m-%d")
+    command_0 = f"SELECT count_notes FROM users WHERE user_id='{id}'"
+    
+    conn = None
+    try:
+        conn = connect_to_base()
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute(command_0)
+            user_data = cur.fetchone()
+            print(user_data)
+            if user_data == None:
+                return
+            count = user_data['count_notes']
+            for item in data:
+                command_1 = (
+                    f"""
+                        INSERT INTO notes (name, count, price, tag, date, fk_notes_users) \
+                        VALUES ('{item['name']}', {item['quantity']}, {float(item['sum']) / 100}, '-', \
+                                '{now_date}', '{id}')
+                    """
+                )
+                cur.execute(command_1)
+                count += 1
+                
+            command_2 = f"UPDATE users SET count_notes={count} WHERE user_id='{id}'"
             cur.execute(command_2)
         conn.commit()
             
@@ -156,7 +197,8 @@ def get_report(id, days_ago, tag):
             
             if all_notes == []:
                 report = "У вас нет ни одной записи за данный временной интервал!"
-                return report
+                # print('No notes\n\n\n\n')
+                return report, 0, (0, 0)
             report = ''
             notes = []
             for i in range(len(all_notes)):
@@ -172,9 +214,10 @@ def get_report(id, days_ago, tag):
             
     except (Exception, psycopg2.DatabaseError) as error:
         print("def get_report(id):", error)
-    finally:
-        if conn is not None:
-            conn.close()
+        return 0, 0, (0, 0)
+    # finally:
+    #     if conn is not None:
+    #         conn.close()
 
 
 def save_tag(id, tag):
@@ -186,7 +229,10 @@ def save_tag(id, tag):
         conn = connect_to_base()
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute(command_0)
-            tags = cur.fetchone()['tags']
+            tags = cur.fetchone()
+            if tags == None:
+                return
+            tags = tags['tags']
             print(tags)
             if tags == '':
                 tags = f'{tag}'
@@ -229,7 +275,10 @@ def remove_active_tag(id, tag):
         conn = connect_to_base()
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute(command_0)
-            buffer = cur.fetchone()['buffer'].split('|')
+            buffer = cur.fetchone()
+            if buffer == None:
+                return
+            buffer = buffer['buffer'].split('|')
             active_tags = buffer[-1].split('.')
             active_tags.remove(tag)
             buffer[-1] = '.'.join(active_tags)
@@ -254,7 +303,10 @@ def remove_tag_from_user(id, tag):
         conn = connect_to_base()
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute(command_0)
-            tags = cur.fetchone()['tags'].split('.')
+            tags = cur.fetchone()
+            if tags == None:
+                return
+            tags = tags['tags'].split('.')
             if tag in tags:
                 tags.remove(tag)
             new_tags = '.'.join(tags)
