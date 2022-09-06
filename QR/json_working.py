@@ -54,12 +54,13 @@ def download_json(qr_code_line):
 
         check_buttons = driver.find_elements(by=By.XPATH,
                     value="//button[contains(@class, 'b-checkform_btn-send')]")
-        check_buttons[-1].click()
-        time.sleep(1)
-
-        action=ActionChains(driver)
 
         yoffset = 500
+        action=ActionChains(driver)
+
+        action.move_to_element_with_offset(to_element=check_buttons[-1], yoffset=yoffset, xoffset=2)
+        check_buttons[-1].click()
+        time.sleep(1)
 
         while True:
             try:
@@ -80,8 +81,11 @@ def download_json(qr_code_line):
                 print(f"\nERR\n{ex}\n")
                 time.sleep(1)
         
+        return 'Got it'
+        
     except Exception as ex:
         print('\nERROR\n\n', ex)
+        return 'Somthing went wrong'
         
     finally:
         driver.close()

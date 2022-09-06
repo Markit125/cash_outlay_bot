@@ -16,7 +16,7 @@ def qr_data(img_path):
 
 
 def main():
-    path = '1083312661.png'
+    path = 'QR/qr1.png'
     data = qr_data(path)
     print(data)
     if data:

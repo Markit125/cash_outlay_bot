@@ -268,6 +268,7 @@ def clear_buffer(id):
         if conn is not None:
             conn.close()
 
+
 def remove_active_tag(id, tag):
     command_0 = f"SELECT buffer FROM users WHERE user_id='{id}'"
     conn = None
@@ -322,6 +323,64 @@ def remove_tag_from_user(id, tag):
     finally:
         if conn is not None:
             conn.close()
+
+
+def get_note_with_position(id, position):
+    command =  f"""
+                    SELECT name, count, price, date
+                    FROM notes WHERE '{id}'=fk_notes_users
+                """
+    
+    conn = None
+    try:
+        conn = connect_to_base()
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute(command)
+            all_notes = cur.fetchall()
+            
+            if all_notes == []:
+                note = "У вас нет ни одной записи за данный временной интервал!"
+                # print('No notes\n\n\n\n')
+                return note
+            note = ''
+            note_with_position = all_notes[-position]
+
+            note += (f"{note_with_position['name']} | {note_with_position['count']} | "
+                    f"{note_with_position['price']}\n"
+            )
+            
+            return note
+            
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("def get_note_with_position(id, position):", error)
+        return -1
+    # finally:
+    #     if conn is not None:
+    #         conn.close()
+
+
+def update_tag(id, note, tags):
+    data = note.split(' | ')
+    command =  f"""
+                    UPDATE notes SET tags='{tags}'
+                    WHERE name='{data[0]}' and count='{data[1]}' and price='{data[2]} and date='{data[3]}'
+                    and '{id}'=fk_notes_users
+                """
+    
+    conn = None
+    try:
+        conn = connect_to_base()
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute(command)
+            all_notes = cur.fetchall()
+            
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("def update_tag(id, note, tags):", error)
+
+    # finally:
+    #     if conn is not None:
+    #         conn.close()
+
 
 
 if __name__ == '__main__':

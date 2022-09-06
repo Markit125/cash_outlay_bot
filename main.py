@@ -33,13 +33,14 @@ class Activity(enum.Enum):
     product_tag = 3
     product_checking = 4
     scan_qr = 5
+    qr_tag = 6
 
 
 @dp.message_handler(content_types=['photo'])
 async def handle_docs_photo(msg):
     id = msg.from_user.id
     user_data = db.get_data(id)
-    if user_data == None:
+    if user_data is None:
         return
 
     if user_data['activity'] != Activity.scan_qr.value:
@@ -58,9 +59,27 @@ async def handle_docs_photo(msg):
         return
 
     await msg.answer(message, parse_mode="html")
-    jw.download_json(qr_code)
+    message = '<b>Getting information...</b>'
+    await msg.answer(message, parse_mode="html")
+
+    message = jw.download_json(qr_code)
+    await msg.answer(message, parse_mode="html")
+    if message != 'Got it':
+        return
+    
     data = jw.extract_json()
+    if data is None:
+        return
     db.add_from_qr(id, data)
+    db.add_to_buffer(id, len(data), position=0)
+
+    db.change_activity(id, Activity.scan_qr.value + 1)
+
+    note = db.get_note_with_position(id, len(data))
+    message = f'Назначте теги товару\n{note}'
+
+    await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], True))
+
     
 
 
@@ -267,6 +286,42 @@ async def get_text_messages(msg: types.Message):
             buffer[-1] = '-'
             message = f"Проверьте запись:\n{get_product_note_check(buffer)}"
             await msg.answer(message, parse_mode="html", reply_markup=keyboard_product_note_check())
+
+
+    elif user_data['activity']    ==    Activity.qr_tag.value:
+        active_tags = user_data['buffer'].split('|')[-1]
+        if text != 'дальше':
+            text = '-' if text == 'пропустить' else msg.text
+            if len(active_tags) == 0:
+                active_tags = text
+            else:
+                if text not in active_tags.split('.'):
+                    active_tags += f'.{text}'
+            db.add_to_buffer(id, active_tags,      Activity.product_tag.value)
+            if text != '-':
+                message = f'Добавьте ещё тег или нажмите <b>Дальше</b>'
+                await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], False, active_tags))
+                return
+
+        position = int(user_data['buffer'].split('|')[0]) - 1
+        if position <= 0:
+            message = 'Покупки успешно добавлены'
+            await msg.answer(message, parse_mode="html")
+            return
+
+        db.add_to_buffer(id, int(position), position=0)
+
+        note = db.get_note_with_position(id, int(position))
+        if note == -1:
+            message = 'Somthing went wrong'
+            await msg.answer(message, parse_mode="html")
+            return
+
+        db.update_tag(id, db.get_note_with_position(id, int(position) + 1), active_tags)
+        message = f'Назначте теги товару\n{note}'
+
+        await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], True))
+       
 
 
     elif user_data['activity'] == Activity.product_checking.value and text in ('готово', 'да', 'нет'):
