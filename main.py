@@ -47,23 +47,25 @@ async def handle_docs_photo(msg):
         return
     
     file = f'{id}.jpg'
-    print(file)
+
     await msg.photo[-1].download(destination_file=file)
     qr_code = qr_data(f'{file}')
-    os.remove(file)
     if qr_code:
         message = f'Scan succeded'
+        await msg.answer(message, parse_mode="html")
     else:
         message = f'Try again'
         await msg.answer(message, parse_mode="html")
         return
 
-    await msg.answer(message, parse_mode="html")
+
     message = '<b>Getting information...</b>'
     await msg.answer(message, parse_mode="html")
 
-    message = jw.download_json(qr_code)
+    message = jw.download_json(f'{qr_code}')
     await msg.answer(message, parse_mode="html")
+    
+    os.remove(file)
     if message != 'Got it':
         return
     
@@ -290,12 +292,15 @@ async def get_text_messages(msg: types.Message):
 
     elif user_data['activity']    ==    Activity.qr_tag.value:
         active_tags = user_data['buffer'].split('|')[-1]
+
+        print(f'active tags:\n{active_tags}')
+
         if text != 'дальше':
             text = '-' if text == 'пропустить' else msg.text
             if len(active_tags) == 0:
                 active_tags = text
             else:
-                if text not in active_tags.split('.'):
+                if text != '-' and text not in active_tags.split('.'):
                     active_tags += f'.{text}'
             db.add_to_buffer(id, active_tags,      Activity.product_tag.value)
             if text != '-':
@@ -318,7 +323,7 @@ async def get_text_messages(msg: types.Message):
             return
 
         db.update_tag(id, db.get_note_with_position(id, int(position) + 1), active_tags)
-        message = f'Назначте теги товару\n{note}'
+        message = f"Назначте теги товару\n{' | '.join(note.split(' | ')[:-1])}"
 
         await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], True))
        

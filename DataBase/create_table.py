@@ -58,7 +58,7 @@ def create_notes_table():
             name            VARCHAR(40)     NOT NULL,
             count           REAL            NOT NULL,
             price           MONEY           NOT NULL,
-            tag             VARCHAR(15)             ,
+            tag             VARCHAR(200)            ,
             date            DATE     NOT NULL,
             fk_notes_users  VARCHAR(20) REFERENCES users(user_id)
         )

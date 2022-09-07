@@ -1,0 +1,51 @@
+{
+    "user": "ООО \"ОКТОБЛУ\"",
+    "items": [
+        {
+            "sum": 59900,
+            "name": "Фуфайка KEEPDRY 100",
+            "price": 59900,
+            "quantity": 1
+        },
+        {
+            "sum": 89900,
+            "name": "TIGHT KDRY100 AD BLACK OUTL",
+            "price": 89900,
+            "quantity": 1
+        }
+    ],
+    "nds18": 24966,
+    "rawData": "AwCdAREEEAA5MjgyNDQwMzAwNjY5ODU3DQQUADAwMDA0ODM5NzkwMDMwMzQgICAg+gMMADUwMjkwODY3NDcgIBAEBAA/YgAA9AMEAJREi181BAYAMQRGss7DDgQEAGIAAAASBAQAPQEAAB4EAQAB/AMDAChJAiMEMwAGBBMAlOPkoKmqoCBLRUVQRFJZIDEwMDcEAgD86f8DAgAAAa8EAQABEwQCAPzpvgQBAAQjBD0ABgQbAFRJR0hUIEtEUlkxMDAgQUQgQkxBQ0sgT1VUTDcEAwAsXwH/AwIAAAGvBAEAARMEAwAsXwG+BAEABB8EAQABuQQBAAIYBA0Ajo6OICKOipKOgYuTIiQEFQBodHRwczovL3d3dy5uYWxvZy5ydS/9AxwAiq6v66uuoqAghaqg4qXgqK2gIJGl4KOlpaKtoPEDJgCMruGqoqAsIOOrLiCCpeDlre/vIIrgoOGtruGlq+zhqqDvLCAzYaMEEACMoKOgp6itIISlqqDiq66tBwQBAAA5BAMAKEkCvwQBAADABAEAAMEEAQAATgQCAIZh",
+    "userInn": "5029086747",
+    "dateTime": "2020-10-17T19:23:00",
+    "kktRegId": "0000483979003034    ",
+    "metadata": {
+        "id": "20201017d110e9ed5e0ee0a5a046ac7d07cb72f724e981d13fbe73f8ba47de9e7a72454c",
+        "_id": {
+            "$oid": "5f8b1a96fddce97fd3465439"
+        },
+        "fsId": "9282440300669857",
+        "ofdId": "ofd5",
+        "subtype": "receipt",
+        "kktRegId": "0000483979003034",
+        "documentId": 25151,
+        "receiveDate": {
+            "$date": 1602951830131
+        },
+        "protocolVersion": "2",
+        "protocolSubversion": 1
+    },
+    "operator": "Копылова Екатерина Сергеевна",
+    "totalSum": 149800,
+    "fiscalSign": 1186123459,
+    "receiptCode": 3,
+    "shiftNumber": 98,
+    "cashTotalSum": 0,
+    "taxationType": 1,
+    "ecashTotalSum": 149800,
+    "operationType": 1,
+    "requestNumber": 317,
+    "fiscalDriveNumber": "9282440300669857",
+    "retailPlaceAddress": "Москва, ул. Верхняя Красносельская, 3a",
+    "fiscalDocumentNumber": 25151
+}

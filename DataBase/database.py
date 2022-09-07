@@ -346,8 +346,9 @@ def get_note_with_position(id, position):
             note_with_position = all_notes[-position]
 
             note += (f"{note_with_position['name']} | {note_with_position['count']} | "
-                    f"{note_with_position['price']}\n"
+                    f"{note_with_position['price']} | {note_with_position['date']}"
             )
+            print(f'\nnote\n{note}')
             
             return note
             
@@ -361,10 +362,12 @@ def get_note_with_position(id, position):
 
 def update_tag(id, note, tags):
     data = note.split(' | ')
+    print(f'\ndata\n{data}')
+    print(f'\ntags\n{tags}')
     command =  f"""
-                    UPDATE notes SET tags='{tags}'
-                    WHERE name='{data[0]}' and count='{data[1]}' and price='{data[2]} and date='{data[3]}'
-                    and '{id}'=fk_notes_users
+                    UPDATE notes SET tag='{tags}'
+                    WHERE name='{data[0]}' and count='{data[1]}' and price='{data[2]}' and date='{data[3]}'
+                    and fk_notes_users='{id}'
                 """
     
     conn = None
@@ -372,7 +375,8 @@ def update_tag(id, note, tags):
         conn = connect_to_base()
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             cur.execute(command)
-            all_notes = cur.fetchall()
+        conn.commit()
+
             
     except (Exception, psycopg2.DatabaseError) as error:
         print("def update_tag(id, note, tags):", error)

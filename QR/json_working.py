@@ -23,19 +23,12 @@ def download_json(qr_code_line):
     firefox_profile.set_preference("browser.download.dir", f'{os.getcwd()}')
     firefox_profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/x-gzip")
 
-    # capa = options.to_capabilities()
-    # capa = DesiredCapabilities.FIREFOX
-    # capa["pageLoadStrategy"] = "none"
-
     driver = webdriver.Firefox(
-                            # desired_capabilities=capa,
-                            # options=options,
                             executable_path=GeckoDriverManager().install(),
                             firefox_profile=firefox_profile
                         )
+    driver.maximize_window()
 
-    # driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(),
-    #                             options=options, desired_capabilities=capa)
     try:
         driver.get('https://proverkacheka.com/#b-checkform_tab-qrraw')
 
