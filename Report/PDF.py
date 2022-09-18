@@ -1,3 +1,4 @@
+from ctypes import alignment
 from decimal import Decimal
 
 from borb.pdf.canvas.color.color import X11Color
@@ -7,6 +8,8 @@ from borb.pdf.canvas.layout.table.table import TableCell
 from borb.pdf.canvas.layout.table.flexible_column_width_table import (
     FlexibleColumnWidthTable,
 )
+from borb.pdf.canvas.layout.table.fixed_column_width_table import FixedColumnWidthTable
+
 from borb.pdf.canvas.layout.layout_element import Alignment
 from borb.pdf.canvas.layout.text.paragraph import Paragraph
 from borb.pdf.document.document import Document
@@ -18,63 +21,109 @@ from borb.pdf.canvas.font.font import Font
 from pathlib import Path
 
 
+def table_header(custom_font):
+    table = FlexibleColumnWidthTable(number_of_columns=6, number_of_rows=10, horizontal_alignment=Alignment.CENTERED)
+    table.add(
+        TableCell(Paragraph("№", font=custom_font), background_color=X11Color("SlateGray"))
+    ).add(
+        TableCell(Paragraph("Название", font=custom_font), background_color=X11Color("SlateGray"))
+    ).add(
+        TableCell(Paragraph("Количество", font=custom_font), background_color=X11Color("SlateGray"))
+    ).add(
+        TableCell(Paragraph("Цена", font=custom_font), background_color=X11Color("SlateGray"))
+    ).add(
+        TableCell(Paragraph("Теги", font=custom_font), background_color=X11Color("SlateGray"))
+    ).add(
+        TableCell(Paragraph("Дата", font=custom_font), background_color=X11Color("SlateGray")
+    ))
+    return table
+
+
 def make_report_in_PDF(id, notes, from_data, to_date):
     doc: Document = Document()
-    page: Page = Page()
-    # doc.add_page(page)
-    layout: PageLayout = SingleColumnLayout(page)
     
     font_path: Path = Path(__file__).parent / "Font.ttf"
     custom_font: Font = TrueTypeFont.true_type_font_from_file(font_path)
 
-    text = f'Отчёт с {from_data} до {to_date}.'
-    
-    remaind_notes = len(notes)
-    while remaind_notes > 0:
-        doc.add_page(page)
-        layout.add(Paragraph(text, font=custom_font, horizontal_alignment=Alignment.CENTERED))
-        table = FlexibleColumnWidthTable(number_of_columns=6, number_of_rows=len(notes)+3, horizontal_alignment=Alignment.CENTERED)
-        table.add(
-            TableCell(Paragraph("№", font=custom_font), background_color=X11Color("SlateGray"))
-        ).add(
-            TableCell(Paragraph("Название", font=custom_font), background_color=X11Color("SlateGray"))
-        ).add(
-            TableCell(Paragraph("Количество", font=custom_font), background_color=X11Color("SlateGray"))
-        ).add(
-            TableCell(Paragraph("Цена", font=custom_font), background_color=X11Color("SlateGray"))
-        ).add(
-            TableCell(Paragraph("Теги", font=custom_font), background_color=X11Color("SlateGray"))
-        ).add(
-            TableCell(Paragraph("Дата", font=custom_font), background_color=X11Color("SlateGray")
-        ))
-        all_sum = 0
+    text = f'Отчёт c {from_data} до {to_date}.'
 
-        remainder = remaind_notes if remaind_notes < 10 else 10
-        for i in range(remainder):
+    
+    all_sum = 0
+    remaind_notes = len(notes)
+    
+
+    page: Page = Page()
+    doc.add_page(page)
+    layout: PageLayout = SingleColumnLayout(page)
+
+    layout.add(Paragraph(text, font=custom_font, horizontal_alignment=Alignment.CENTERED))
+
+    table = table_header(custom_font)
+    
+    i = 0
+    while remaind_notes > 0:
+        try:
             table.add(Paragraph(f"{i + 1}", font=custom_font)
             ).add(Paragraph(f"{notes[i]['name']}", font=custom_font)
             ).add(Paragraph(f"{notes[i]['count']}", font=custom_font)
             ).add(Paragraph(f"{notes[i]['price']}", font=custom_font)
             ).add(Paragraph(f"{notes[i]['tag'].replace('.', ', ')}", font=custom_font)
             ).add(Paragraph(f"{notes[i]['date']}", font=custom_font))
-            all_sum += float(notes[i]['price'][:-2].replace(",", "."))
-            remaind_notes -= 1
-            print(remaind_notes)
+        except:
+            table.set_padding_on_all_cells(Decimal(2), Decimal(2), Decimal(4), Decimal(4))
+            layout.add(table)
+            page: Page = Page()
+            doc.add_page(page)
+            layout: PageLayout = SingleColumnLayout(page)
+            table = table_header(custom_font)
+
+        all_sum += float(notes[i]['price'][:-2].replace(",", "."))
+
+
+        print(f"{notes[i]['name']} {notes[i]['count']} {notes[i]['price']} {notes[i]['tag'].replace('.', ', ')}")
+        print(remaind_notes)
+        remaind_notes -= 1
+        i += 1
         
-        table.add(
-            TableCell(
-                Paragraph(" "),
-                col_span=6,
-                border_right=False,
-                border_left=False
-            )
+    table.set_padding_on_all_cells(Decimal(2), Decimal(2), Decimal(4), Decimal(4))
+    layout.add(table)
+
+    table = FlexibleColumnWidthTable(number_of_columns=6, number_of_rows=2, horizontal_alignment=Alignment.CENTERED)
+    table.add(
+        TableCell(
+            Paragraph(" "),
+            col_span=6,
+            border_right=False,
+            border_left=False,
+            border_top=False
         )
-        table.add(TableCell(
-            Paragraph("Итого", font=custom_font, horizontal_alignment=Alignment.RIGHT), col_span=5)
-        ).add(Paragraph(f"{all_sum}{notes[0]['price'][-2:]}", font=custom_font))
-        
-        table.set_padding_on_all_cells(Decimal(2), Decimal(2), Decimal(4), Decimal(4))
-        layout.add(table)
+    )
+
+    table.add(TableCell(
+        Paragraph("Итого", font=custom_font, horizontal_alignment=Alignment.RIGHT), col_span=5)
+    ).add(Paragraph(f"{all_sum}{notes[0]['price'][-2:]}", font=custom_font))
+
+    table.set_padding_on_all_cells(Decimal(2), Decimal(2), Decimal(4), Decimal(4))
+    layout.add(table)
     
+
+
     with open(f"{id}.pdf", "wb") as out_file_handle:
         PDF.dumps(out_file_handle, doc)
+
+
+def main():
+    notes = [
+        {
+            'name': 'giant',
+            'count': f'{i}',
+            'price': f'{float(i * 10)} P',
+            'tag': f'aaa{i * ".dcdc"}', 
+            'date': '22.07.22'
+        } for i in range(1, 10)
+    ]
+    make_report_in_PDF('5348545210', notes, '21.07.22', '23.07.22')
+
+
+if __name__ == '__main__':
+    main()
