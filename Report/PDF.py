@@ -43,9 +43,10 @@ def table_header(custom_font, count_of_notes):
 
 def count_of_next_list_notes(notes_on_a_page, remaind_notes):
     if notes_on_a_page < remaind_notes + 2:
+        if notes_on_a_page < remaind_notes:
+            return remaind_notes
         return notes_on_a_page
-    else:
-        return remaind_notes + 2
+    return remaind_notes + 2
 
 
 def make_report_in_PDF(id, notes, from_data, to_date):
@@ -89,7 +90,7 @@ def make_report_in_PDF(id, notes, from_data, to_date):
             remaind_notes -= 1
             i += 1
 
-        if remainder < 2:
+        if remainder > 1:
             table.set_padding_on_all_cells(Decimal(2), Decimal(2), Decimal(4), Decimal(4))
             layout.add(table)
             page: Page = Page()
@@ -124,16 +125,19 @@ def make_report_in_PDF(id, notes, from_data, to_date):
 
 
 def main():
-    notes = [
+    
+    counts = [15, 16, 17, 18, 29, 33, 34, 35]
+    for j in counts:
+        notes = [
         {
             'name': 'giant',
             'count': f'{i}',
             'price': f'{float(i * 10)} P',
             'tag': f'aaa{10 * ".dcdc"}', 
             'date': '22.07.22'
-        } for i in range(1, 18)
+        } for i in range(1, j + 1)
     ]
-    make_report_in_PDF('5348545210', notes, '21.07.22', '23.07.22')
+        make_report_in_PDF(f'{j}', notes, '21.07.22', '23.07.22')
 
 
 if __name__ == '__main__':
