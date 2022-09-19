@@ -43,10 +43,11 @@ def table_header(custom_font, count_of_notes):
 
 def count_of_next_list_notes(notes_on_a_page, remaind_notes):
     if notes_on_a_page < remaind_notes + 2:
-        if notes_on_a_page < remaind_notes:
-            return remaind_notes
-        return notes_on_a_page
-    return remaind_notes + 2
+        return min(notes_on_a_page, remaind_notes)
+    
+    if remaind_notes < notes_on_a_page - 1:
+        return remaind_notes + 2
+    print(remaind_notes, notes_on_a_page)
 
 
 def make_report_in_PDF(id, notes, from_data, to_date):
@@ -57,10 +58,15 @@ def make_report_in_PDF(id, notes, from_data, to_date):
     font_path: Path = Path(__file__).parent / "Font.ttf"
     custom_font: Font = TrueTypeFont.true_type_font_from_file(font_path)
 
-    text = f'Отчёт c {from_data} до {to_date}.'
 
+    page_number = 1
     all_sum = 0
     remaind_notes = len(notes)
+
+    if remaind_notes > 15:
+        text = f'Report from {from_data} to {to_date}. Page {page_number}.\n'
+    else:
+        text = f'Report from {from_data} to {to_date}.\n'
 
     page: Page = Page()
     doc.add_page(page)
@@ -90,12 +96,16 @@ def make_report_in_PDF(id, notes, from_data, to_date):
             remaind_notes -= 1
             i += 1
 
-        if remainder > 1:
+        if remainder < 2:
+            page_number += 1
+
             table.set_padding_on_all_cells(Decimal(2), Decimal(2), Decimal(4), Decimal(4))
             layout.add(table)
             page: Page = Page()
             doc.add_page(page)
             layout: PageLayout = SingleColumnLayout(page)
+            text = f'Report from {from_data} to {to_date}. Page {page_number}\n'
+            layout.add(Paragraph(text, font=custom_font, horizontal_alignment=Alignment.CENTERED))
             if remaind_notes == 0:
                 table = FlexibleColumnWidthTable(number_of_columns=6, number_of_rows=2, horizontal_alignment=Alignment.CENTERED)
             else:
