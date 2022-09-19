@@ -1,7 +1,5 @@
-from ctypes import alignment
+
 from decimal import Decimal
-from math import remainder
-import re
 
 from borb.pdf.canvas.color.color import X11Color
 from borb.pdf.canvas.layout.page_layout.multi_column_layout import SingleColumnLayout
@@ -28,24 +26,27 @@ def table_header(custom_font, count_of_notes):
     table.add(
         TableCell(Paragraph("№", font=custom_font), background_color=X11Color("SlateGray"))
     ).add(
-        TableCell(Paragraph("Название", font=custom_font), background_color=X11Color("SlateGray"))
+        TableCell(Paragraph("Name", font=custom_font), background_color=X11Color("SlateGray"))
     ).add(
-        TableCell(Paragraph("Количество", font=custom_font), background_color=X11Color("SlateGray"))
+        TableCell(Paragraph("Count", font=custom_font), background_color=X11Color("SlateGray"))
     ).add(
-        TableCell(Paragraph("Цена", font=custom_font), background_color=X11Color("SlateGray"))
+        TableCell(Paragraph("Price", font=custom_font), background_color=X11Color("SlateGray"))
     ).add(
-        TableCell(Paragraph("Теги", font=custom_font), background_color=X11Color("SlateGray"))
+        TableCell(Paragraph("Tags", font=custom_font), background_color=X11Color("SlateGray"))
     ).add(
-        TableCell(Paragraph("Дата", font=custom_font), background_color=X11Color("SlateGray")
+        TableCell(Paragraph("Date", font=custom_font), background_color=X11Color("SlateGray")
     ))
     return table
 
 
 def count_of_next_list_notes(notes_on_a_page, remaind_notes):
+    if notes_on_a_page == remaind_notes + 1:
+        return notes_on_a_page + 1
+        
     if notes_on_a_page < remaind_notes + 2:
         return min(notes_on_a_page, remaind_notes)
     
-    if remaind_notes < notes_on_a_page - 1:
+    if notes_on_a_page > remaind_notes + 1:
         return remaind_notes + 2
     print(remaind_notes, notes_on_a_page)
 
@@ -63,8 +64,8 @@ def make_report_in_PDF(id, notes, from_data, to_date):
     all_sum = 0
     remaind_notes = len(notes)
 
-    if remaind_notes > 15:
-        text = f'Report from {from_data} to {to_date}. Page {page_number}.\n'
+    if remaind_notes > 16:
+        text = f'Report from {from_data} to {to_date}. Page {page_number}\n'
     else:
         text = f'Report from {from_data} to {to_date}.\n'
 
@@ -74,7 +75,6 @@ def make_report_in_PDF(id, notes, from_data, to_date):
 
     layout.add(Paragraph(text, font=custom_font, horizontal_alignment=Alignment.CENTERED))
 
-    # table = table_header(custom_font, len(notes))
     table = table_header(custom_font, count_of_next_list_notes(notes_on_a_page, remaind_notes))
     
     i = 0
@@ -96,7 +96,7 @@ def make_report_in_PDF(id, notes, from_data, to_date):
             remaind_notes -= 1
             i += 1
 
-        if remainder < 2:
+        if remainder < 1:
             page_number += 1
 
             table.set_padding_on_all_cells(Decimal(2), Decimal(2), Decimal(4), Decimal(4))
@@ -123,7 +123,7 @@ def make_report_in_PDF(id, notes, from_data, to_date):
     )
 
     table.add(TableCell(
-        Paragraph("Итого", font=custom_font, horizontal_alignment=Alignment.RIGHT), col_span=5)
+        Paragraph("Overall", font=custom_font, horizontal_alignment=Alignment.RIGHT), col_span=5)
     ).add(Paragraph(f"{all_sum}{notes[0]['price'][-2:]}", font=custom_font))
     
     table.set_padding_on_all_cells(Decimal(2), Decimal(2), Decimal(4), Decimal(4))
