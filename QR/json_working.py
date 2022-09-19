@@ -55,11 +55,18 @@ def download_json(qr_code_line):
         check_buttons[-1].click()
         time.sleep(1)
 
-        while True:
+        success = False
+
+        for _ in range(3):
             try:
                 ads = driver.find_elements(By.CLASS_NAME, "b-footer_adv-close")
                 if ads != []:
                     ads[0].click()
+
+            except Exception as ex:
+                print(f"\nERR with advertize closing\n{ex}\n")
+            
+            try:
                 element = driver.find_element(By.XPATH, "//button[@class='btn btn-primary btn-sm dropdown-toggle']")
                 action.move_to_element_with_offset(to_element=element, yoffset=yoffset, xoffset=2)
                 WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH,
@@ -69,12 +76,17 @@ def download_json(qr_code_line):
                 action.move_to_element_with_offset(to_element=element, yoffset=yoffset, xoffset=2)
                 WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.LINK_TEXT, "JSON"))).click()
 
+                success = True
                 break
+
             except Exception as ex:
                 print(f"\nERR\n{ex}\n")
                 time.sleep(1)
-        
-        return 'Got it'
+
+        if success:
+            return 'Got it'
+        else:
+            return 'Try it again'
         
     except Exception as ex:
         print('\nERROR\n\n', ex)

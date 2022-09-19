@@ -11,6 +11,13 @@ def qr_data(img_path):
         return 0
 
 
+def check_qr_code_text(qr_code: str):
+    for c in qr_code.strip():
+        if c in ('\n', ' '):
+            return False
+    return True
+
+
 def main():
     path = '1083312661.jpg'
     data = qr_data(path)

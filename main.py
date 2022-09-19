@@ -1,3 +1,4 @@
+from tabnanny import check
 from aiogram.dispatcher.filters import Text
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
@@ -13,7 +14,7 @@ import os
 from dotenv import load_dotenv
 
 import QR.json_working as jw
-from recognizer import qr_data
+from recognizer import qr_data, check_qr_code_text
 
 load_dotenv()
 bot = Bot(token=os.getenv('TOKEN'))
@@ -81,11 +82,6 @@ async def handle_docs_photo(msg):
     message = f'Назначте теги товару\n{note}'
 
     await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], True))
-
-    
-
-
-
 
 
 @dp.message_handler(commands=['start', 'help'])
@@ -211,7 +207,7 @@ async def get_text_messages(msg: types.Message):
     text = msg.text.lower()
     id = msg.from_user.id
     user_data = db.get_data(id)
-    print(user_data)
+    print(f'\n{user_data}\n')
 
     if user_data == None:
         message = "Выполните команду /start"
@@ -309,10 +305,6 @@ async def get_text_messages(msg: types.Message):
                 return
 
         position = int(user_data['buffer'].split('|')[0]) - 1
-        if position <= 0:
-            message = 'Покупки успешно добавлены'
-            await msg.answer(message, parse_mode="html")
-            return
 
         db.add_to_buffer(id, int(position), position=0)
 
@@ -323,11 +315,17 @@ async def get_text_messages(msg: types.Message):
             return
 
         db.update_tag(id, db.get_note_with_position(id, int(position) + 1), active_tags)
+
+        if position < 1:
+            message = 'Покупки успешно добавлены'
+            await msg.answer(message, parse_mode="html", reply_markup=keyboard_add_purchase())
+            return
+
         message = f"Назначте теги товару\n{' | '.join(note.split(' | ')[:-1])}"
+        db.add_to_buffer(id, '', Activity.product_tag.value)
 
         await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], True))
        
-
 
     elif user_data['activity'] == Activity.product_checking.value and text in ('готово', 'да', 'нет'):
         db.add_note(id)
@@ -395,7 +393,36 @@ async def get_text_messages(msg: types.Message):
         await msg.answer(message, parse_mode="html")
 
 
+    elif user_data['activity'] == Activity.scan_qr.value:
+        qr_code = text
+        if not check_qr_code_text(qr_code):
+            message = 'QR-code isn\'t correct!'
+            await msg.answer(message, parse_mode="html")    
+            return
+
+        message = '<b>Getting information...</b>'
+        await msg.answer(message, parse_mode="html")
+
+        message = jw.download_json(f'{qr_code}')
+        await msg.answer(message, parse_mode="html")
         
+        if message != 'Got it':
+            return
+        
+        data = jw.extract_json()
+        if data is None:
+            return
+        db.add_from_qr(id, data)
+        db.add_to_buffer(id, len(data), position=0)
+
+        db.change_activity(id, Activity.scan_qr.value + 1)
+
+        note = db.get_note_with_position(id, len(data))
+        message = f'Назначте теги товару\n{note}'
+
+        await msg.answer(message, parse_mode="html", reply_markup=keyboard_tag(user_data['tags'], True))
+
+
     else:
         print(text)
         await msg.answer('Вернитесь в меню -> /menu')
