@@ -250,7 +250,8 @@ async def get_text_messages(msg: types.Message):
             await msg.answer(message, parse_mode="html")
             return
 
-        db.add_to_buffer(id, text,  Activity.product_price.value)
+        count = int(user_data['buffer'].split()[Activity.product_count])
+        db.add_to_buffer(id, float(text) * count,  Activity.product_price.value)
         db.change_activity(id,      Activity.product_price.value + 1)
         
         message = "Назначте теги товару"

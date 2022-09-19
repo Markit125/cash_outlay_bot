@@ -33,11 +33,12 @@ def check_in_base(id):
                 cur.execute(
                     f"""
                         INSERT INTO users (user_id, activity, count_notes, buffer, tags)
-                        VALUES ('{id}', -1, 0, '|||', ' ')
+                        VALUES ('{id}', -1, 0, '|||', '')
                     """
                 )
         conn.commit()
-            
+        # remove_tag_from_user(id, ' ')
+
     except (Exception, psycopg2.DatabaseError) as error:
         print("def check_in_base(id): ", error)
     finally:
