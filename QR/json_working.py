@@ -109,7 +109,7 @@ def extract_json():
 
 
 def main():
-    print(extract_json())
+    extract_json()
 
 
 if __name__ == '__main__':
