@@ -222,7 +222,7 @@ def get_report(id, days_ago, tag):
 
 
 def save_tag(id, tag):
-    print(tag)
+    # print(tag)
     command_0 = f"SELECT tags FROM users WHERE user_id='{id}'"
     
     conn = None
@@ -234,7 +234,7 @@ def save_tag(id, tag):
             if tags == None:
                 return
             tags = tags['tags']
-            print(tags)
+            # print(tags)
             if tags == '':
                 tags = f'{tag}'
             else:
@@ -363,8 +363,8 @@ def get_note_with_position(id, position):
 
 def update_tag(id, note, tags):
     data = note.split(' | ')
-    print(f'\ndata\n{data}')
-    print(f'\ntags\n{tags}')
+    # print(f'\ndata\n{data}')
+    # print(f'\ntags\n{tags}')
     command =  f"""
                     UPDATE notes SET tag='{tags}'
                     WHERE name='{data[0]}' and count='{data[1]}' and price='{data[2]}' and date='{data[3]}'
