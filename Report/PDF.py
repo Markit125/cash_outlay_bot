@@ -48,7 +48,7 @@ def count_of_next_list_notes(notes_on_a_page, remaind_notes):
     
     if notes_on_a_page > remaind_notes + 1:
         return remaind_notes + 2
-    print(remaind_notes, notes_on_a_page)
+    # print(remaind_notes, notes_on_a_page)
 
 
 def make_report_in_PDF(id, notes, from_data, to_date):
@@ -86,13 +86,13 @@ def make_report_in_PDF(id, notes, from_data, to_date):
             table.add(Paragraph(f"{i + 1}", font=custom_font)
             ).add(Paragraph(f"{notes[i]['name']}", font=custom_font)
             ).add(Paragraph(f"{notes[i]['count']}", font=custom_font)
-            ).add(Paragraph(f"{notes[i]['price']}", font=custom_font)
+            ).add(Paragraph(f"{notes[i]['price'][1:]} ₽", font=custom_font)
             ).add(Paragraph(f"{notes[i]['tag'].replace('.', ', ')}", font=custom_font)
             ).add(Paragraph(f"{notes[i]['date']}", font=custom_font))
-            all_sum += float(notes[i]['price'][:-2].replace(",", "."))
+            all_sum += float(notes[i]['price'][1:].replace(",", "."))
         
-            print(f"{notes[i]['name']} {notes[i]['count']} {notes[i]['price']} {notes[i]['tag'].replace('.', ', ')}")
-            print(remaind_notes)
+            # print(f"{notes[i]['name']} {notes[i]['count']} {notes[i]['price']} {notes[i]['tag'].replace('.', ', ')}")
+            # print(remaind_notes)
             remaind_notes -= 1
             i += 1
 

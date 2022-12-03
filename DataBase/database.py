@@ -205,7 +205,7 @@ def get_report(id, days_ago, tag):
             for i in range(len(all_notes)):
                 if tag in all_notes[i]['tag'] or tag == 'empty':
                     report += (f"{i} | {all_notes[i]['name']} | {all_notes[i]['count']} | "
-                            f"{all_notes[i]['price']} | {all_notes[i]['tag']} |{all_notes[i]['date']}\n"
+                            f"{all_notes[i]['price'][1:]} ₽ | {all_notes[i]['tag']} |{all_notes[i]['date']}\n"
                     )
                     notes.append(all_notes[i])
             if ago_date == None:
@@ -347,7 +347,7 @@ def get_note_with_position(id, position):
             note_with_position = all_notes[-position]
 
             note += (f"{note_with_position['name']} | {note_with_position['count']} | "
-                    f"{note_with_position['price']} | {note_with_position['date']}"
+                    f"{note_with_position['price'][1:]} ₽ | {note_with_position['date']}"
             )
             print(f'\nnote\n{note}')
             
