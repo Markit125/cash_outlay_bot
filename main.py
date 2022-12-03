@@ -207,7 +207,7 @@ async def get_text_messages(msg: types.Message):
     text = msg.text.lower()
     id = msg.from_user.id
     user_data = db.get_data(id)
-    print(f'\n{user_data}\n')
+    # print(f'\n{user_data}\n')
 
     if user_data == None:
         message = "Выполните команду /start"
@@ -290,7 +290,7 @@ async def get_text_messages(msg: types.Message):
     elif user_data['activity']    ==    Activity.qr_tag.value:
         active_tags = user_data['buffer'].split('|')[-1]
 
-        print(f'active tags:\n{active_tags}')
+        # print(f'active tags:\n{active_tags}')
 
         if text != 'дальше':
             text = '-' if text == 'пропустить' else msg.text
@@ -425,9 +425,17 @@ async def get_text_messages(msg: types.Message):
 
 
     else:
-        print(text)
+        # print(text)
         await msg.answer('Вернитесь в меню -> /menu')
 
 
+def main():
+    while True:
+        try:
+            executor.start_polling(dp, skip_updates=True)
+        except Exception:
+            continue
+
+
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    main()
